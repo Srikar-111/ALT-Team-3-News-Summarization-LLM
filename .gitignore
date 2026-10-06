@@ -1,0 +1,30 @@
+﻿# Local secrets and environment files
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data and experiment outputs
+*.csv
+data/
+outputs/
+
+# Model checkpoints
+*.bin
+*.pt
+*.safetensors
+checkpoints/
+
+# Frontend dependencies/build artifacts
+frontend/node_modules/
+frontend/.next/
+frontend/tsconfig.tsbuildinfo
