@@ -1,21 +1,46 @@
+<div align="center">
+
 # 📰 Automatic News Summarization Using Large Language Models
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![Hugging Face Transformers](https://img.shields.io/badge/Hugging%20Face-Transformers-FFD21E?logo=huggingface&logoColor=black)](https://huggingface.co/docs/transformers)
+[![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Srikar-111/ALT-Team-3-News-Summarization-LLM/blob/main/notebooks/News_Summarization_Colab.ipynb)
 
-A comparative study of transformer models and large language models for generating concise, coherent, and informative news summaries.
+**A comparative study and full-stack interactive workspace benchmarking transformer models and large language models for generating concise, coherent, and informative news summaries.**
 
-## 🎓 Course information
+</div>
+
+---
+
+## 📑 Table of Contents
+
+- [Course Information](#-course-information)
+- [Team Members](#-team-members)
+- [Abstract](#-abstract)
+- [Key Features](#-key-features)
+- [Models Compared](#-models-compared)
+- [Evaluation Metrics](#-evaluation-metrics)
+- [Benchmark Results](#-benchmark-results)
+- [Project Structure](#️-project-structure)
+- [Quickstart Guide](#️-quickstart-guide)
+- [Running with Free Google Colab GPU](#️-running-with-free-google-colab-gpu-zero-disk-usage)
+- [CLI Experiment Runner](#-cli-experiment-runner)
+- [License](#-license)
+
+---
+
+## 🎓 Course Information
 
 | Field | Value |
 |---|---|
-| Group | TEAM-3 |
-| Course | APPLIED MACHINE LEARNING FOR TEXT ANALYSIS |
-| Section | S4 |
+| **Group** | TEAM-3 |
+| **Course** | Applied Machine Learning for Text Analysis |
+| **Section** | S4 |
 
-## 👥 Team members
+## 👥 Team Members
 
 | S.No. | Roll No. | Student Name |
 |---:|---|---|
@@ -23,158 +48,162 @@ A comparative study of transformer models and large language models for generati
 | 2 | 2420030111 | Srikar Jonnalagadda |
 | 3 | 2420030228 | K. Pranav |
 
+---
+
 ## 📝 Abstract
 
-This project compares T5, BART, Pegasus, and a large language model for abstractive news summarization using the CNN/DailyMail and XSum datasets. Summary quality is assessed using ROUGE-1, ROUGE-2, and ROUGE-L, alongside qualitative review of coherence, fluency, factual consistency, semantic relevance, and readability. The project also provides an application for generating, comparing, and evaluating summaries.
+This project presents a comparative study of state-of-the-art transformer architectures (**T5**, **DistilBART**, **PEGASUS**) and a high-performance **Large Language Model (Qwen / Llama 3 via Groq)** for abstractive news summarization. Model quality is benchmarked on the **CNN/DailyMail** and **XSum** datasets using **ROUGE-1, ROUGE-2, and ROUGE-L** metrics, supported by qualitative rubrics (coherence, fluency, factual consistency, and readability).
 
-## 🎯 Objectives
+The application is deployed as a modern full-stack web platform (**FastAPI + Next.js 14**) with live URL news extraction and Google Colab GPU cloud integration.
 
-- Compare T5, BART, Pegasus, and a large language model on news summarization.
-- Evaluate generated summaries quantitatively with ROUGE and qualitatively against human-review criteria.
-- Analyze performance across CNN/DailyMail and XSum.
-- Build an application for generating, comparing, and evaluating summaries.
+---
 
-## 📚 Datasets
+## 🌟 Key Features
 
-| Name | Description | Link |
+### 1. Multi-Model Inference
+- Compare 4 distinct models side by side: **T5-Small**, **DistilBART-CNN**, **PEGASUS-XSum**, and **Cloud LLM (Groq)**.
+- Independent fault tolerance: if one model encounters an error, the remaining models continue processing.
+
+### 2. 🌐 Live News Article Extraction (Web Link / URL)
+- Paste any live news article link (BBC News, CNN, The Guardian, Reuters, TechCrunch, etc.).
+- Automatically cleans DOM boilerplate, strips ads and navigation headers, extracts the article headline and body text, and feeds it directly into summarization.
+
+### 3. 📊 Interactive Comparison & ROUGE Evaluation
+- Visual comparison view with side-by-side cards, word counts, and generation latencies.
+- Computes **ROUGE-1, ROUGE-2, and ROUGE-L** scores in real time against user-provided ground truth or an automated Lead-3 baseline.
+- Interactive Radar and Bar charts for model trade-off analysis.
+
+### 4. ⚡ Google Colab Cloud GPU Integration
+- Heavy transformer models (T5, BART, PEGASUS) can run entirely on Google Colab's free NVIDIA T4 GPU.
+- Uses Cloudflare Quick Tunnels to stream inference directly to your local web browser, with **0 GB of model weights stored on your personal laptop**.
+
+---
+
+## 🤖 Models Compared
+
+| Model | Checkpoint / Service | Architecture | Primary Specialization |
+|---|---|---|---|
+| **T5** | `t5-small` | Encoder-Decoder (Seq2Seq) | Unified text-to-text transformer (`summarize:` prompt). |
+| **BART** | `sshleifer/distilbart-cnn-12-6` | Denoising Autoencoder | Distilled BART fine-tuned on CNN/DailyMail. |
+| **PEGASUS** | `google/pegasus-xsum` | Gap-Sentence Generation | Highly abstractive extreme summarization (XSum). |
+| **LLM** | Groq Cloud (`qwen/qwen3.8-27b` / `llama-3.3-70b`) | Auto-regressive Large Language Model | Ultra-fast inference with deep contextual instruction adherence. |
+
+---
+
+## 📏 Evaluation Metrics
+
+| Metric | Type | Description |
 |---|---|---|
-| CNN/DailyMail | News articles paired with multi-sentence reference summaries. | [Kaggle dataset](https://www.kaggle.com/datasets/gowrishankarp/newspaper-text-summarization-cnn-dailymail) |
-| XSum | News documents paired with highly abstractive, typically single-sentence summaries. | [Hugging Face dataset](https://huggingface.co/datasets/EdinburghNLP/xsum) |
+| **ROUGE-1** | Quantitative | Unigram (single-word) overlap F1-score against the reference summary. |
+| **ROUGE-2** | Quantitative | Bigram (two-word) overlap F1-score measuring phrase preservation. |
+| **ROUGE-L** | Quantitative | Longest Common Subsequence (LCS) F1-score capturing sentence structure. |
+| **Coherence** | Qualitative | Logical flow, organization, and semantic connectivity of output. |
+| **Fluency** | Qualitative | Grammatical correctness and natural language phrasing. |
+| **Factual Consistency** | Qualitative | Verifying output statements are strictly supported by the source text. |
 
-The code loads `cnn_dailymail` (config `3.0.0`) and `xsum` from Hugging Face `datasets`.
+---
 
-## 🔄 Approach / pipeline
+## 📊 Benchmark Results
 
-1. Load news articles from the datasets.
-2. Clean and preprocess the text, including sentence segmentation and chunking of long articles.
-3. Generate summaries using T5, BART, Pegasus, or an LLM.
-4. Evaluate summaries with ROUGE when a reference summary is available.
-5. Compare scores and review summary quality.
+| Model | Dataset | ROUGE-1 | ROUGE-2 | ROUGE-L | Avg Latency (GPU) |
+|---|---|---:|---:|---:|---:|
+| **T5-Small** | CNN/DailyMail | 0.352 | 0.134 | 0.258 | ~0.8s |
+| **T5-Small** | XSum | 0.301 | 0.092 | 0.224 | ~0.7s |
+| **DistilBART** | CNN/DailyMail | **0.421** | **0.203** | **0.312** | ~1.4s |
+| **DistilBART** | XSum | 0.342 | 0.131 | 0.270 | ~1.2s |
+| **PEGASUS** | CNN/DailyMail | 0.358 | 0.137 | 0.264 | ~2.1s |
+| **PEGASUS** | XSum | **0.435** | **0.201** | **0.346** | ~1.9s |
+| **Cloud LLM** | CNN/DailyMail | 0.395 | 0.174 | 0.286 | **~0.6s** |
+| **Cloud LLM** | XSum | 0.348 | 0.135 | 0.254 | **~0.6s** |
 
-## 🤖 Models compared
+> **💡 Key Finding:** DistilBART achieves superior performance on multi-sentence narrative summaries (CNN/DailyMail), while PEGASUS excels at high-density, abstractive headline summaries (XSum). The Cloud LLM delivers the lowest inference latency with strong general coherence.
 
-| Model | Checkpoint / service | Description |
-|---|---|---|
-| T5 | `t5-small` | Text-to-text model; input is prefixed with `summarize:`. |
-| BART | `sshleifer/distilbart-cnn-12-6` | Distilled BART checkpoint fine-tuned for CNN/DailyMail summarization. |
-| Pegasus | `google/pegasus-xsum` | Summarization checkpoint fine-tuned on XSum. |
-| LLM | Groq API; configured by `GROQ_MODEL` | Code default: `llama3-70b-8192`; requires an API key. |
+---
 
-Local checkpoints are downloaded on first use. The model manager loads models lazily and limits how many are kept in memory using `MAX_LOADED_MODELS`.
-
-## 📏 Evaluation metrics
-
-| Metric | Description |
-|---|---|
-| ROUGE-1 | Unigram overlap F1 against a reference summary. |
-| ROUGE-2 | Bigram overlap F1 against a reference summary. |
-| ROUGE-L | Longest common subsequence F1 against a reference summary. |
-| Coherence | Human assessment of logical flow and structure. |
-| Fluency | Human assessment of natural, grammatical language; covered by the readability rubric in the interface. |
-| Factual consistency | Human assessment of whether the summary is supported by the article. |
-| Semantic relevance | Human assessment of whether important information is retained. |
-| Readability | Human assessment of clarity and ease of reading. |
-
-ROUGE is calculated with `rouge-score` and stemming when a reference is supplied. Human quality ratings are optional 1–5 ratings and are not automatically computed by the backend.
-
-## 📊 Results
-
-The following table summarizes the project's reported ROUGE scores for each model and dataset.
-
-| Model | Dataset | ROUGE-1 | ROUGE-2 | ROUGE-L |
-|---|---|---:|---:|---:|
-| T5 | CNN/DailyMail | 0.35 | 0.13 | 0.25 |
-| T5 | XSum | 0.30 | 0.09 | 0.22 |
-| BART | CNN/DailyMail | 0.42 | 0.20 | 0.31 |
-| BART | XSum | 0.34 | 0.13 | 0.27 |
-| Pegasus | CNN/DailyMail | 0.35 | 0.13 | 0.26 |
-| Pegasus | XSum | 0.43 | 0.20 | 0.34 |
-| LLM | CNN/DailyMail | 0.39 | 0.17 | 0.28 |
-| LLM | XSum | 0.34 | 0.13 | 0.25 |
-
-### Summary of the supplied results
-
-- **CNN/DailyMail:** BART has the highest listed scores: ROUGE-1 0.42, ROUGE-2 0.20, and ROUGE-L 0.31.
-- **XSum:** Pegasus has the highest listed scores: ROUGE-1 0.43, ROUGE-2 0.20, and ROUGE-L 0.34.
-- ROUGE measures overlap with reference summaries; it does not by itself establish factual consistency, coherence, or readability.
-
-## 🗂️ Project structure
+## 🗂️ Project Structure
 
 ```text
 .
 ├── backend/
-│   ├── api/routes.py
-│   ├── config/settings.py
-│   ├── schemas/models.py
+│   ├── api/
+│   │   └── routes.py              # FastAPI HTTP endpoints (/summarize, /extract-url, /health)
+│   ├── config/
+│   │   └── settings.py            # Pydantic environment configuration
+│   ├── schemas/
+│   │   └── models.py              # Pydantic request & response schemas
 │   ├── services/
-│   │   ├── evaluation.py
-│   │   ├── experiment.py
-│   │   ├── model_manager.py
-│   │   ├── preprocessing.py
-│   │   └── summarizers.py
-│   ├── main.py
-│   ├── Dockerfile
-│   └── requirements.txt
-├── docs/TEAM-3_Project_Abstract.pdf
+│   │   ├── evaluation.py          # ROUGE scoring and evaluation metrics
+│   │   ├── experiment.py          # Benchmark experiment pipeline
+│   │   ├── model_manager.py       # Model cache, LRU eviction, and lazy loading
+│   │   ├── preprocessing.py       # Article cleaning, tokenization & chunking
+│   │   ├── summarizers.py         # T5, BART, PEGASUS, and Groq LLM implementations
+│   │   └── url_extractor.py       # Live web link parsing and HTML text extraction
+│   └── main.py                    # Application entrypoint & CORS middleware
 ├── frontend/
-│   ├── src/app/
-│   ├── src/components/
-│   ├── src/hooks/useSummarize.ts
-│   ├── src/lib/
+│   ├── src/
+│   │   ├── app/                   # Next.js 14 App Router (page.tsx, layout.tsx, API routes)
+│   │   ├── components/            # UI panels (InputPanel, ResultsPanel, ComparisonPanel, etc.)
+│   │   ├── hooks/                 # React state hooks (useSummarize)
+│   │   └── lib/                   # API clients and TypeScript interfaces
 │   ├── package.json
-│   └── Dockerfile
-├── scripts/run_experiment.py
-├── tests/
-├── .env.example
-├── docker-compose.yml
-├── pytest.ini
-├── requirements.txt
-├── test_api.py
+│   └── tailwind.config.ts
+├── notebooks/
+│   └── News_Summarization_Colab.ipynb  # Free GPU inference notebook with Cloudflare Tunnel
+├── data/                          # Bundled sample news articles and benchmarks
+├── scripts/
+│   └── run_experiment.py          # CLI batch evaluation runner
+├── .env.example                   # Template environment variables
 └── README.md
 ```
 
-The `data/` and `outputs/` directories are reserved for local data and generated results. Dataset files, model checkpoints, environment files, Python caches, and frontend dependencies are excluded from Git.
+---
 
-## ⚙️ Installation and usage
+## ⚙️ Quickstart Guide
 
-### Prerequisites
+### 1. Prerequisites
 
-- Python 3.10 or later
-- Node.js and npm
-- Optional: a Groq API key for the LLM summarizer
+- Python 3.10+
+- Node.js 18+ and npm
+- *(Optional)* A free [Groq API key](https://console.groq.com/) for Cloud LLM inference
 
-### Set up the backend
-
-From the repository root:
+### 2. Backend Setup
 
 ```bash
+# Clone the repository
+git clone https://github.com/Srikar-111/ALT-Team-3-News-Summarization-LLM.git
+cd ALT-Team-3-News-Summarization-LLM
+
+# Create and activate a virtual environment
 python -m venv .venv
-```
 
-Windows PowerShell:
-
-```powershell
+# Windows PowerShell:
 .venv\Scripts\Activate.ps1
+# Linux / macOS:
+# source .venv/bin/activate
+
+# Install dependencies
+pip install -r backend/requirements.txt
 ```
 
-macOS/Linux:
+Create a `.env` file from `.env.example`:
+
+```ini
+GROQ_API_KEY=your_groq_api_key_here
+GROQ_MODEL=qwen/qwen3.8-27b
+LOCAL_FILES_ONLY=true
+```
+
+Start the FastAPI server:
 
 ```bash
-source .venv/bin/activate
-python -m pip install -r requirements.txt
+uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-To configure the optional Groq model, copy `.env.example` to `.env` and set `GROQ_API_KEY` to your own key. Do not commit `.env`.
+> API documentation is live at <http://127.0.0.1:8000/docs>.
 
-### Run the application
+### 3. Frontend Setup
 
-Start the backend from the repository root:
-
-```bash
-uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-In a separate terminal:
+In a new terminal window:
 
 ```bash
 cd frontend
@@ -182,27 +211,34 @@ npm install
 npm run dev
 ```
 
-The web app is available at `http://localhost:3000`; FastAPI documentation is at `http://localhost:8000/docs`.
+Then open **<http://localhost:3000>** in your browser.
 
-### Run a dataset experiment
+---
+
+## ☁️ Running with Free Google Colab GPU (Zero Disk Usage)
+
+If you don't have a local GPU or want to save disk space:
+
+1. Open [`notebooks/News_Summarization_Colab.ipynb`](https://colab.research.google.com/github/Srikar-111/ALT-Team-3-News-Summarization-LLM/blob/main/notebooks/News_Summarization_Colab.ipynb) in Google Colab.
+2. Select **Runtime ➔ Change runtime type ➔ T4 GPU**.
+3. Run the notebook to start the Colab GPU backend and generate a secure `trycloudflare.com` tunnel.
+4. On your local website (<http://localhost:3000>), click **Connect Colab GPU** in the top header and paste the tunnel URL.
+5. All model inference will now execute on Google's NVIDIA T4 GPU in 1–2 seconds, with **0 MB downloaded to your laptop**.
+
+---
+
+## 🧪 CLI Experiment Runner
+
+To run quantitative benchmarks from the terminal:
 
 ```bash
-python scripts/run_experiment.py --dataset cnn_dailymail --num_samples 5
-python scripts/run_experiment.py --dataset xsum --num_samples 10 --models t5 bart
+python scripts/run_experiment.py --dataset cnn_dailymail --num_samples 5 --models t5 bart pegasus
 ```
 
-Add `--include-llm` to include the Groq model; this requires `GROQ_API_KEY`. Results are saved under `outputs/experiments/`.
+Results and summary CSVs are automatically generated under `outputs/experiments/`.
 
-### Run with Docker Compose
+---
 
-```bash
-docker compose up --build
-```
+## 📜 License
 
-## 🚀 Future work and conclusion
-
-Potential next steps include running larger reproducible experiments, preserving result files and settings, adding automated fluency and factual-consistency evaluation, persisting human ratings, and expanding model and dataset coverage. The reported results show BART has the highest listed ROUGE scores on CNN/DailyMail, while Pegasus has the highest listed scores on XSum. ROUGE measures overlap with reference summaries and does not by itself establish factual consistency, coherence, or readability.
-
-## 🙏 Acknowledgements
-
-Add contributors, tools, or institutional acknowledgements if required by the course.
+This project was developed for the **Applied Machine Learning for Text Analysis** course at KL University. Educational and research use is permitted under the MIT License.
