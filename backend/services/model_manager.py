@@ -116,8 +116,8 @@ class ModelManager:
 
         try:
             start = time.time()
-            tokenizer = AutoTokenizer.from_pretrained(checkpoint)
-            model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint)
+            tokenizer = AutoTokenizer.from_pretrained(checkpoint, local_files_only=settings.LOCAL_FILES_ONLY)
+            model = AutoModelForSeq2SeqLM.from_pretrained(checkpoint, local_files_only=settings.LOCAL_FILES_ONLY)
             model = model.to(self.device)
             model.eval()  # Set to evaluation mode
             elapsed = time.time() - start
@@ -133,7 +133,7 @@ class ModelManager:
             return model, tokenizer
 
         except Exception as e:
-            error_msg = f"Failed to load model '{name}': {e}"
+            error_msg = f"Model '{name.upper()}' is not installed locally. Use Cloud LLM on this laptop, or run all models in Google Colab." if ("does not appear" in str(e) or "offline" in str(e).lower() or "not found" in str(e).lower() or "local_files_only" in str(e).lower() or "cannot find" in str(e).lower()) else f"Failed to load model '{name}': {e}"
             logger.error(error_msg)
             self._load_errors[name] = str(e)
             raise RuntimeError(error_msg) from e

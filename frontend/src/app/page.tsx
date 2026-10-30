@@ -1,23 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertTriangle, BarChart3, FlaskConical, Sparkles } from 'lucide-react';
+import { AlertTriangle, BarChart3, Sparkles } from 'lucide-react';
 import Header from '@/components/Header';
 import InputPanel from '@/components/InputPanel';
 import ResultsPanel from '@/components/ResultsPanel';
 import ComparisonPanel from '@/components/ComparisonPanel';
 import EvaluationPanel from '@/components/EvaluationPanel';
-import ExperimentPanel from '@/components/ExperimentPanel';
 import { useSummarize } from '@/hooks/useSummarize';
 
 const tabs = [
   { id: 'summarize', label: 'Summarize', icon: Sparkles },
   { id: 'compare', label: 'Compare', icon: BarChart3 },
-  { id: 'experiment', label: 'Experiment', icon: FlaskConical },
 ] as const;
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'summarize' | 'compare' | 'experiment'>('summarize');
+  const [activeTab, setActiveTab] = useState<'summarize' | 'compare'>('summarize');
   const { response, isLoading, error, submitArticle } = useSummarize();
 
   return (
@@ -43,7 +41,7 @@ export default function Home() {
             <div className="grid grid-cols-3 gap-3">
               {[
                 ['04', 'models'],
-                ['03', 'views'],
+                ['02', 'views'],
                 ['01', 'workspace'],
               ].map(([value, label]) => (
                 <div key={label} className="rounded-2xl border border-white/[0.08] bg-black/15 px-3 py-4 sm:px-4">
@@ -58,7 +56,7 @@ export default function Home() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="section-label">Workspace</p>
-            <p className="text-sm text-white/55 mt-1">Choose a view to prepare, compare, or benchmark summaries.</p>
+            <p className="text-sm text-white/55 mt-1">Choose a view to generate or compare multi-model summaries.</p>
           </div>
           <div className="w-full sm:w-auto bg-black/20 p-1.5 rounded-2xl border border-white/[0.08] flex gap-1.5 overflow-x-auto">
             {tabs.map(({ id, label, icon: Icon }) => (
@@ -78,9 +76,23 @@ export default function Home() {
         </div>
 
         {error && (
-          <div className="rounded-2xl border border-red-400/25 bg-red-400/[0.09] p-4 flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-red-300 flex-shrink-0" />
-            <p className="text-red-100/90 text-sm">{error}</p>
+          <div className="rounded-2xl border border-red-400/25 bg-red-400/[0.09] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-300 flex-shrink-0" />
+              <p className="text-red-100/90 text-sm">{error}</p>
+            </div>
+            {error.includes('Colab') && (
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.removeItem('backend_url');
+                  window.location.reload();
+                }}
+                className="btn-primary text-xs px-4 py-2 shrink-0 font-bold whitespace-nowrap"
+              >
+                Switch to Local Mode Now
+              </button>
+            )}
           </div>
         )}
 
@@ -105,12 +117,6 @@ export default function Home() {
                 <EvaluationPanel response={response} />
               </div>
             </>
-          )}
-
-          {activeTab === 'experiment' && (
-            <div className="col-span-1 lg:col-span-12 animate-slide-up">
-              <ExperimentPanel />
-            </div>
           )}
         </div>
       </main>

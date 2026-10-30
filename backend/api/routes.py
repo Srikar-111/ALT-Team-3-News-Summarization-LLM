@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException
 import torch
 
 from backend.schemas.models import (
+    ExtractUrlRequest, ExtractUrlResponse,
     SummarizationRequest, SummarizationResponse,
     EvaluationRequest, EvaluationResponse,
     ExperimentRequest, ExperimentStatus, ExperimentResult,
@@ -73,7 +74,7 @@ async def list_models():
             max_input_tokens=512, is_local=True,
         ),
         ModelInfo(
-            name="llm", display_name="Llama 3.3 70B (Groq)",
+            name="llm", display_name="LLM (Groq)",
             checkpoint=settings.GROQ_MODEL,
             status="available" if settings.GROQ_API_KEY else "unavailable",
             description="Meta's Llama 3.3 70B model via Groq API. Fast cloud inference with free tier.",
@@ -83,10 +84,27 @@ async def list_models():
     return models
 
 
+
+
+# ─── URL Article Extraction ───────────────────────────────────────────────────
+
+@router.post("/extract-url", response_model=ExtractUrlResponse)
+def extract_url(request: ExtractUrlRequest):
+    """Extract clean news article text and title from a web URL."""
+    from backend.services.url_extractor import extract_article_from_url
+    try:
+        data = extract_article_from_url(request.url)
+        return ExtractUrlResponse(**data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Unexpected error extracting URL {request.url}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to extract article: {str(e)}")
+
 # ─── Summarize ────────────────────────────────────────────────────────────────
 
 @router.post("/summarize", response_model=SummarizationResponse)
-async def summarize(request: SummarizationRequest):
+def summarize(request: SummarizationRequest):
     """Generate summaries for an article using selected models.
     
     Each model runs independently — if one fails, others still return results.
@@ -149,12 +167,18 @@ async def summarize(request: SummarizationRequest):
                 error=str(e),
             ))
 
-    # Evaluate if reference summary provided
+    # Evaluate models
     evaluation = None
     comparison = None
-    if request.reference_summary and successful_summaries:
+    if successful_summaries:
+        ref_summary = request.reference_summary
+        if not ref_summary or not ref_summary.strip():
+            # Standard Lead-3 baseline: first 3 sentences of the article
+            sentences = [s.strip() for s in cleaned_text.replace("\n", " ").split(".") if len(s.strip()) > 15]
+            ref_summary = ". ".join(sentences[:3]) + "." if len(sentences) >= 3 else cleaned_text[:300]
+
         evaluation = evaluate_multiple(
-            successful_summaries, request.reference_summary
+            successful_summaries, ref_summary
         )
         # Generate comparison
         summary_dicts = [s.model_dump() for s in summaries]
@@ -162,9 +186,6 @@ async def summarize(request: SummarizationRequest):
             summary_dicts, evaluation, stats["word_count"]
         )
         comparison = ComparisonResult(**comparison_data)
-    elif not request.reference_summary and successful_summaries:
-        # No reference — provide evaluation without ROUGE
-        evaluation = evaluate_multiple(successful_summaries, None)
 
     return SummarizationResponse(
         request_id=str(uuid.uuid4()),
@@ -282,9 +303,13 @@ async def start_experiment(request: ExperimentRequest):
                 include_llm=request.include_llm,
                 max_length=request.max_length,
                 min_length=request.min_length,
+                experiment_id=experiment_id,
             )
         except Exception as e:
             logger.error(f"Experiment {experiment_id} failed: {e}")
+            if experiment_id in experiment_runner.experiments:
+                experiment_runner.experiments[experiment_id]["status"] = "failed"
+                experiment_runner.experiments[experiment_id]["current_step"] = f"Failed: {str(e)}"
 
     thread = threading.Thread(target=run, daemon=True)
     thread.start()
@@ -318,3 +343,22 @@ async def experiment_status(experiment_id: str):
         completed_samples=status["completed_samples"],
         errors=status["errors"],
     )
+
+
+
+@router.get("/experiment/{experiment_id}/results")
+async def experiment_results(experiment_id: str):
+    """Get the full results of a completed experiment."""
+    import json
+    from pathlib import Path
+    from backend.services.experiment import experiment_runner
+    from backend.config.settings import settings
+
+    results = experiment_runner.get_results(experiment_id)
+    if not results:
+        json_path = Path(settings.OUTPUT_DIR) / "experiments" / f"experiment_{experiment_id}" / "results.json"
+        if json_path.exists():
+            with open(json_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        raise HTTPException(status_code=404, detail=f"Results for experiment '{experiment_id}' not found")
+    return results

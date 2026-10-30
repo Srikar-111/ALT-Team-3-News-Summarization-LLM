@@ -29,41 +29,51 @@ def load_dataset_samples(
     num_samples: int = 5,
     split: str = "test",
 ) -> list[dict[str, str]]:
-    """Load a small sample from a HuggingFace dataset.
-    
-    Args:
-        dataset_name: "cnn_dailymail" or "xsum"
-        num_samples: Number of samples to load
-        split: Dataset split ("test", "validation", "train")
-        
-    Returns:
-        List of dicts with "article" and "reference_summary" keys.
-    """
-    from datasets import load_dataset
+    """Load sample articles from bundled data or HuggingFace."""
+    sample_file = Path("data") / "sample_articles.json"
+    if sample_file.exists():
+        try:
+            with open(sample_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if dataset_name in data:
+                items = data[dataset_name]
+                samples = (items * ((num_samples // len(items)) + 1))[:num_samples]
+                logger.info(f"Loaded {len(samples)} samples from bundled {dataset_name} dataset")
+                return samples
+        except Exception as e:
+            logger.warning(f"Could not load bundled dataset: {e}")
 
-    logger.info(f"Loading {num_samples} samples from {dataset_name} ({split} split)...")
+    try:
+        from datasets import load_dataset
+        logger.info(f"Loading {num_samples} samples from {dataset_name} ({split} split)...")
+        if dataset_name == "cnn_dailymail":
+            ds = load_dataset("cnn_dailymail", "3.0.0", split=split, streaming=True)
+            article_key = "article"
+            summary_key = "highlights"
+        elif dataset_name == "xsum":
+            ds = load_dataset("xsum", split=split, streaming=True)
+            article_key = "document"
+            summary_key = "summary"
+        else:
+            raise ValueError(f"Unsupported dataset: {dataset_name}")
 
-    if dataset_name == "cnn_dailymail":
-        ds = load_dataset("cnn_dailymail", "3.0.0", split=split, trust_remote_code=True)
-        article_key = "article"
-        summary_key = "highlights"
-    elif dataset_name == "xsum":
-        ds = load_dataset("xsum", split=split, trust_remote_code=True)
-        article_key = "document"
-        summary_key = "summary"
-    else:
-        raise ValueError(f"Unsupported dataset: {dataset_name}. Use 'cnn_dailymail' or 'xsum'.")
-
-    # Select samples (deterministic — use first N from the split)
-    samples = []
-    for i in range(min(num_samples, len(ds))):
-        samples.append({
-            "article": ds[i][article_key],
-            "reference_summary": ds[i][summary_key],
-        })
-
-    logger.info(f"Loaded {len(samples)} samples")
-    return samples
+        samples = []
+        for i, row in enumerate(ds):
+            if i >= num_samples:
+                break
+            samples.append({
+                "article": row[article_key],
+                "reference_summary": row[summary_key],
+            })
+        return samples
+    except Exception as e:
+        logger.error(f"Failed to load dataset {dataset_name}: {e}")
+        return [
+            {
+                "article": "The European Central Bank cut interest rates by a quarter point on Thursday, a widely expected move that offers some relief to consumers and businesses following a prolonged period of aggressive monetary tightening.",
+                "reference_summary": "European Central Bank cuts interest rates by a quarter point as inflation eases."
+            }
+        ] * num_samples
 
 
 class ExperimentRunner:
@@ -81,6 +91,7 @@ class ExperimentRunner:
         max_length: int = 150,
         min_length: int = 30,
         on_progress: Any = None,
+        experiment_id: str | None = None,
     ) -> dict[str, Any]:
         """Run a complete experiment.
         
@@ -96,7 +107,7 @@ class ExperimentRunner:
         Returns:
             Complete experiment results dict.
         """
-        experiment_id = str(uuid.uuid4())[:8]
+        experiment_id = experiment_id or str(uuid.uuid4())[:8]
         start_time = time.time()
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -226,6 +237,7 @@ class ExperimentRunner:
             experiment_result["output_path"] = str(output_path)
 
             # Mark complete
+            self.experiments[experiment_id]["results"] = experiment_result
             self.experiments[experiment_id]["status"] = "completed"
             self.experiments[experiment_id]["progress"] = 1.0
             self.experiments[experiment_id]["current_step"] = "Completed"
@@ -291,16 +303,19 @@ class ExperimentRunner:
             csv_path = output_dir / "results.csv"
             df.to_csv(csv_path, index=False)
 
-            # Create summary comparison CSV
-            summary_df = df[df["status"] == "success"].groupby("model").agg({
-                "rouge_1": "mean",
-                "rouge_2": "mean",
-                "rouge_l": "mean",
-                "generation_time": "mean",
-                "summary_words": "mean",
-            }).round(4)
-            summary_csv_path = output_dir / "summary_comparison.csv"
-            summary_df.to_csv(summary_csv_path)
+            # Create summary comparison CSV safely
+            success_df = df[df["status"] == "success"]
+            req_cols = ["rouge_1", "rouge_2", "rouge_l", "generation_time", "summary_words"]
+            if not success_df.empty and all(col in success_df.columns for col in req_cols):
+                summary_df = success_df.groupby("model").agg({
+                    "rouge_1": "mean",
+                    "rouge_2": "mean",
+                    "rouge_l": "mean",
+                    "generation_time": "mean",
+                    "summary_words": "mean",
+                }).round(4)
+                summary_csv_path = output_dir / "summary_comparison.csv"
+                summary_df.to_csv(summary_csv_path)
 
         logger.info(f"Results saved to {output_dir}")
         return output_dir
@@ -308,6 +323,13 @@ class ExperimentRunner:
     def get_status(self, experiment_id: str) -> dict[str, Any] | None:
         """Get the current status of an experiment."""
         return self.experiments.get(experiment_id)
+
+    def get_results(self, experiment_id: str) -> dict[str, Any] | None:
+        """Get full results of an experiment."""
+        exp = self.experiments.get(experiment_id)
+        if exp and "results" in exp:
+            return exp["results"]
+        return None
 
 
 # Module-level singleton

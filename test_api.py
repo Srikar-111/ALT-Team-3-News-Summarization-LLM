@@ -1,8 +1,15 @@
-import urllib.request, urllib.error, json
+import urllib.request, urllib.error, json, os
+from dotenv import load_dotenv
+
+load_dotenv()
+api_key = os.getenv("GROQ_API_KEY", "")
 
 req = urllib.request.Request(
     'https://api.groq.com/openai/v1/models',
-    headers={'Authorization': 'Bearer your_groq_api_key_here'}
+    headers={
+        'Authorization': f'Bearer {api_key}',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+    }
 )
 try:
     res = urllib.request.urlopen(req)

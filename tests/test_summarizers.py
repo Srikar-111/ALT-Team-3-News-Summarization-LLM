@@ -50,13 +50,20 @@ class TestBARTSummarizer:
         bart = BARTSummarizer()
         assert bart.name == "bart"
         assert bart.model_key == "bart"
+        assert bart.is_local is True
 
 
 class TestPegasusSummarizer:
+    def test_no_prefix(self):
+        pegasus = PegasusSummarizer()
+        result = pegasus._prepare_input("Hello world")
+        assert result == "Hello world"  # No prefix for Pegasus
+
     def test_name_and_key(self):
-        peg = PegasusSummarizer()
-        assert peg.name == "pegasus"
-        assert peg.model_key == "pegasus"
+        pegasus = PegasusSummarizer()
+        assert pegasus.name == "pegasus"
+        assert pegasus.model_key == "pegasus"
+        assert pegasus.is_local is True
 
 
 class TestLLMSummarizer:
@@ -67,8 +74,7 @@ class TestLLMSummarizer:
 
     def test_no_api_key_raises(self):
         llm = LLMSummarizer()
-        with patch("backend.config.settings.settings") as mock_settings:
-            mock_settings.GROQ_API_KEY = ""
+        with patch("backend.services.summarizers.settings.GROQ_API_KEY", ""):
             with pytest.raises(RuntimeError, match="Groq API key not configured"):
                 llm._get_client()
 
@@ -86,18 +92,11 @@ class TestLLMSummarizer:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "This is a test summary from the LLM."
 
-        with patch("backend.config.settings.settings") as mock_settings:
-            mock_settings.GROQ_API_KEY = "test_key"
-            mock_settings.GROQ_MODEL = "llama-3.3-70b-versatile"
-            mock_settings.GROQ_MAX_RETRIES = 1
-            mock_settings.GROQ_RETRY_DELAY = 0.1
+        mock_client = MagicMock()
+        mock_client.chat.completions.create.return_value = mock_response
 
-            with patch("backend.services.summarizers.settings", mock_settings):
-                mock_client = MagicMock()
-                mock_client.chat.completions.create.return_value = mock_response
-
-                with patch.object(llm, "_get_client", return_value=mock_client):
-                    result = llm.summarize("This is a test article " * 20, max_length=50)
-                    assert result["summary"] == "This is a test summary from the LLM."
-                    assert result["generation_time_seconds"] >= 0
-                    assert result["was_chunked"] is False
+        with patch.object(llm, "_get_client", return_value=mock_client):
+            result = llm.summarize("This is a test article " * 20, max_length=50)
+            assert result["summary"] == "This is a test summary from the LLM."
+            assert result["generation_time_seconds"] >= 0
+            assert result["was_chunked"] is False

@@ -215,7 +215,7 @@ class LLMSummarizer(BaseSummarizer):
     """
 
     name = "llm"
-    display_name = "Llama 3.3 70B (Groq)"
+    display_name = "LLM (Groq)"
     is_local = False
 
     SYSTEM_PROMPT = (

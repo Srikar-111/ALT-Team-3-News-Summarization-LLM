@@ -22,6 +22,19 @@ export interface ExperimentRequest {
   min_length: number;
 }
 
+
+export interface ExtractUrlRequest {
+  url: string;
+}
+
+export interface ExtractUrlResponse {
+  url: string;
+  title: string;
+  text: string;
+  description: string;
+  word_count: number;
+}
+
 export interface EvaluationRequest {
   summary: string;
   reference_summary: string;
@@ -165,5 +178,5 @@ export const MODEL_OPTIONS: ModelSelection[] = [
   { name: 't5', display_name: 'T5-Small', selected: true, checkpoint: 't5-small' },
   { name: 'bart', display_name: 'DistilBART-CNN', selected: true, checkpoint: 'sshleifer/distilbart-cnn-12-6' },
   { name: 'pegasus', display_name: 'PEGASUS-XSum', selected: true, checkpoint: 'google/pegasus-xsum' },
-  { name: 'llm', display_name: 'Llama 3.3 70B (Groq)', selected: true, checkpoint: 'llama-3.3-70b-versatile' },
+  { name: 'llm', display_name: 'LLM (Groq Cloud)', selected: true, checkpoint: 'qwen/qwen3.8-27b' },
 ];

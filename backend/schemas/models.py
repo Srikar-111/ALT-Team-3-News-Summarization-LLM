@@ -58,6 +58,18 @@ class QualitativeScoreInput(BaseModel):
     semantic_relevance: int = Field(..., ge=1, le=5)
     notes: str | None = None
 
+
+
+class ExtractUrlRequest(BaseModel):
+    url: str = Field(..., min_length=5, description="Web URL of the news article")
+
+class ExtractUrlResponse(BaseModel):
+    url: str
+    title: str
+    text: str
+    description: str
+    word_count: int
+
 # --- Response Models ---
 
 class ArticleStats(BaseModel):
@@ -144,6 +156,7 @@ class ExperimentStatus(BaseModel):
     total_samples: int
     completed_samples: int
     errors: list[str]
+    results: dict | None = None
 
 class ExperimentResult(BaseModel):
     experiment_id: str
